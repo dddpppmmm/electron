@@ -4,6 +4,8 @@
 
 #include "shell/browser/session_preferences.h"
 
+#include "base/strings/utf_string_conversions.h"
+
 namespace electron {
 
 // static
@@ -22,14 +24,18 @@ SessionPreferences* SessionPreferences::FromBrowserContext(
 }
 
 // static
-std::vector<base::FilePath::StringType> SessionPreferences::GetValidPreloads(
+std::vector<std::string> SessionPreferences::GetValidPreloads(
     content::BrowserContext* context) {
-  std::vector<base::FilePath::StringType> result;
+  std::vector<std::string> result;
 
   if (auto* self = FromBrowserContext(context)) {
     for (const auto& preload : self->preloads()) {
       if (base::FilePath(preload).IsAbsolute()) {
+#if defined(OS_WIN)
+        result.emplace_back(base::UTF16ToUTF8(preload));
+#else
         result.emplace_back(preload);
+#endif
       } else {
         LOG(ERROR) << "preload script must have absolute path: " << preload;
       }

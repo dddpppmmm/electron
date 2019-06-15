@@ -26,6 +26,21 @@ struct DraggableRegion {
   gfx.mojom.Rect bounds;
 };
 
+struct WebPreferences {
+  array<string> preload_paths;
+  string background_color;
+  bool context_isolation;
+  bool enable_plugins;
+  bool enable_remote_module;
+  bool node_integration;
+  bool node_integration_in_subframes;
+  bool native_window_open;
+  bool webview_tag;
+  bool is_hidden_page;
+  int32 guest_instance_id;
+  int32 opener_id;
+};
+
 interface ElectronBrowser {
   // Emits an event on |channel| from the ipcMain JavaScript object in the main
   // process.
@@ -71,6 +86,9 @@ interface ElectronBrowser {
 
   [Sync]
   DoGetZoomLevel() => (double result);
+
+  [Sync]
+  DoGetWebPreferences() => (WebPreferences result);
 
   // TODO: move these into a separate interface
   ShowAutofillPopup(gfx.mojom.RectF bounds, array<mojo_base.mojom.String16> values, array<mojo_base.mojom.String16> labels);

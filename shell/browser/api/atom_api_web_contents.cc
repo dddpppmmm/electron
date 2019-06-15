@@ -2196,6 +2196,17 @@ void WebContents::DoGetZoomLevel(DoGetZoomLevelCallback callback) {
   std::move(callback).Run(GetZoomLevel());
 }
 
+void WebContents::DoGetWebPreferences(DoGetWebPreferencesCallback callback) {
+  mojom::WebPreferencesPtr result;
+  if (auto* web_preferences = WebContentsPreferences::From(web_contents())) {
+    result = web_preferences->ToMojo();
+  } else {
+    result = mojom::WebPreferences::New();
+  }
+  result->preload_paths = GetPreloadPaths();
+  std::move(callback).Run(std::move(result));
+}
+
 void WebContents::ShowAutofillPopup(const gfx::RectF& bounds,
                                     const std::vector<base::string16>& values,
                                     const std::vector<base::string16>& labels) {
@@ -2207,13 +2218,17 @@ void WebContents::HideAutofillPopup() {
   CommonWebContentsDelegate::HideAutofillPopup();
 }
 
-std::vector<base::FilePath::StringType> WebContents::GetPreloadPaths() const {
+std::vector<std::string> WebContents::GetPreloadPaths() const {
   auto result = SessionPreferences::GetValidPreloads(GetBrowserContext());
 
   if (auto* web_preferences = WebContentsPreferences::From(web_contents())) {
     base::FilePath::StringType preload;
     if (web_preferences->GetPreloadPath(&preload)) {
+#if defined(OS_WIN)
+      result.emplace_back(base::UTF16ToUTF8(preload));
+#else
       result.emplace_back(preload);
+#endif
     }
   }
 
@@ -2237,13 +2252,10 @@ v8::Local<v8::Value> WebContents::GetLastWebPreferences(
 }
 
 bool WebContents::IsRemoteModuleEnabled() const {
-  if (web_contents()->GetVisibleURL().SchemeIs("devtools")) {
-    return false;
-  }
   if (auto* web_preferences = WebContentsPreferences::From(web_contents())) {
     return web_preferences->IsRemoteModuleEnabled();
   }
-  return true;
+  return false;
 }
 
 v8::Local<v8::Value> WebContents::GetOwnerBrowserWindow() const {

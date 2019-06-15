@@ -5,6 +5,7 @@
 #ifndef SHELL_BROWSER_SESSION_PREFERENCES_H_
 #define SHELL_BROWSER_SESSION_PREFERENCES_H_
 
+#include <string>
 #include <vector>
 
 #include "base/files/file_path.h"
@@ -17,7 +18,7 @@ class SessionPreferences : public base::SupportsUserData::Data {
  public:
   static SessionPreferences* FromBrowserContext(
       content::BrowserContext* context);
-  static std::vector<base::FilePath::StringType> GetValidPreloads(
+  static std::vector<std::string> GetValidPreloads(
       content::BrowserContext* context);
 
   explicit SessionPreferences(content::BrowserContext* context);
