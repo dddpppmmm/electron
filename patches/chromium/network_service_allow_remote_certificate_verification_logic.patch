@@ -5,10 +5,10 @@ Subject: network service: allow remote certificate verification logic
 
 
 diff --git a/services/network/network_context.cc b/services/network/network_context.cc
-index 5d871fc08218b71c93141963db66465f775b1bc2..97128a6b6223e7fb977b5c9f20bf18da26c8348d 100644
+index d61991d8157d55016457798c631c1ea3f805450a..a425c663a7e82aa079cf6c6b7c54c27688b5805d 100644
 --- a/services/network/network_context.cc
 +++ b/services/network/network_context.cc
-@@ -89,6 +89,11 @@
+@@ -91,6 +91,11 @@
  #include "services/network/url_loader.h"
  #include "services/network/url_request_context_builder_mojo.h"
  
@@ -20,7 +20,7 @@ index 5d871fc08218b71c93141963db66465f775b1bc2..97128a6b6223e7fb977b5c9f20bf18da
  #if BUILDFLAG(IS_CT_SUPPORTED)
  #include "components/certificate_transparency/chrome_ct_policy_enforcer.h"
  #include "components/certificate_transparency/chrome_require_ct_delegate.h"
-@@ -310,6 +315,75 @@ std::string HashesToBase64String(const net::HashValueVector& hashes) {
+@@ -316,6 +321,75 @@ std::string HashesToBase64String(const net::HashValueVector& hashes) {
  
  }  // namespace
  
@@ -96,7 +96,7 @@ index 5d871fc08218b71c93141963db66465f775b1bc2..97128a6b6223e7fb977b5c9f20bf18da
  constexpr uint32_t NetworkContext::kMaxOutstandingRequestsPerProcess;
  constexpr bool NetworkContext::enable_resource_scheduler_;
  
-@@ -668,6 +742,12 @@ void NetworkContext::SetClient(mojom::NetworkContextClientPtr client) {
+@@ -676,6 +750,12 @@ void NetworkContext::SetClient(mojom::NetworkContextClientPtr client) {
    client_ = std::move(client);
  }
  
@@ -109,8 +109,8 @@ index 5d871fc08218b71c93141963db66465f775b1bc2..97128a6b6223e7fb977b5c9f20bf18da
  void NetworkContext::CreateURLLoaderFactory(
      mojom::URLLoaderFactoryRequest request,
      mojom::URLLoaderFactoryParamsPtr params) {
-@@ -2130,12 +2210,19 @@ URLRequestContextOwner NetworkContext::MakeURLRequestContext() {
-               net::CreateCertVerifyProcBuiltin(cert_net_fetcher_)));
+@@ -2144,12 +2224,19 @@ URLRequestContextOwner NetworkContext::MakeURLRequestContext() {
+                   cert_net_fetcher_, /*system_trust_store_provider=*/nullptr)));
      }
  #endif
 -    if (!cert_verifier)
@@ -134,7 +134,7 @@ index 5d871fc08218b71c93141963db66465f775b1bc2..97128a6b6223e7fb977b5c9f20bf18da
    std::unique_ptr<net::NetworkDelegate> network_delegate =
        std::make_unique<NetworkServiceNetworkDelegate>(this);
 diff --git a/services/network/network_context.h b/services/network/network_context.h
-index 0f9e0fe5922c228d96ba7d8668a88d5d31c516e9..9552cfa88d2a45aa6bff24c3e89d080c8aad98a0 100644
+index 8b45ddce818911d3e65ab2fdb2d86ea4d510d9f6..5bdf8ae6c0c5f2df2fd62b1dfd50fa2b9eb1505d 100644
 --- a/services/network/network_context.h
 +++ b/services/network/network_context.h
 @@ -74,6 +74,7 @@ class DomainReliabilityMonitor;
@@ -163,10 +163,10 @@ index 0f9e0fe5922c228d96ba7d8668a88d5d31c516e9..9552cfa88d2a45aa6bff24c3e89d080c
    // CertNetFetcher is not used by the current platform.
    scoped_refptr<net::CertNetFetcherImpl> cert_net_fetcher_;
 diff --git a/services/network/public/mojom/network_context.mojom b/services/network/public/mojom/network_context.mojom
-index 69885a8bc0e2219ed6c10e684db0ad7d5cd6b87e..bf0750e75e357275f5a569cc8e0680b606b544f6 100644
+index 52ed232f4fe1fbffeffcbc64bc49e460544862e8..5f4ec3d0f427ae7c2b0ee34fd005ef69ffd60cf5 100644
 --- a/services/network/public/mojom/network_context.mojom
 +++ b/services/network/public/mojom/network_context.mojom
-@@ -160,6 +160,17 @@ interface TrustedURLLoaderHeaderClient {
+@@ -161,6 +161,17 @@ interface TrustedURLLoaderHeaderClient {
    OnLoaderCreated(int32 request_id, TrustedHeaderClient& header_client);
  };
  
@@ -184,7 +184,7 @@ index 69885a8bc0e2219ed6c10e684db0ad7d5cd6b87e..bf0750e75e357275f5a569cc8e0680b6
  // Parameters for constructing a network context.
  struct NetworkContextParams {
    // Name used by memory tools to identify the context.
-@@ -541,6 +552,9 @@ interface NetworkContext {
+@@ -560,6 +571,9 @@ interface NetworkContext {
    // Sets a client for this network context.
    SetClient(NetworkContextClient client);
  

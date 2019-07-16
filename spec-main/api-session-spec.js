@@ -47,7 +47,8 @@ describe('session module', () => {
       expect(session.fromPartition('test')).to.equal(session.fromPartition('test'))
     })
 
-    it('created session is ref-counted', () => {
+    // TODO(codebytere): remove in Electron v8.0.0
+    it('created session is ref-counted (functions)', () => {
       const partition = 'test2'
       const userAgent = 'test-agent'
       const ses1 = session.fromPartition(partition)
@@ -56,6 +57,17 @@ describe('session module', () => {
       ses1.destroy()
       const ses2 = session.fromPartition(partition)
       expect(ses2.getUserAgent()).to.not.equal(userAgent)
+    })
+
+    it('created session is ref-counted', () => {
+      const partition = 'test2'
+      const userAgent = 'test-agent'
+      const ses1 = session.fromPartition(partition)
+      ses1.userAgent = userAgent
+      expect(ses1.userAgent).to.equal(userAgent)
+      ses1.destroy()
+      const ses2 = session.fromPartition(partition)
+      expect(ses2.userAgent).to.not.equal(userAgent)
     })
   })
 
@@ -812,9 +824,22 @@ describe('session module', () => {
 
   describe('ses.setPermissionRequestHandler(handler)', () => {
     it('cancels any pending requests when cleared', async () => {
+      if (w != null) w.destroy()
+      w = new BrowserWindow({
+        show: false,
+        webPreferences: {
+          partition: `very-temp-permision-handler`,
+          nodeIntegration: true,
+        }
+      })
+
       const ses = w.webContents.session
       ses.setPermissionRequestHandler(() => {
         ses.setPermissionRequestHandler(null)
+      })
+
+      ses.protocol.interceptStringProtocol('https', (req, cb) => {
+        cb(`<html><script>(${remote})()</script></html>`)
       })
 
       const result = emittedOnce(require('electron').ipcMain, 'message')
@@ -825,7 +850,7 @@ describe('session module', () => {
         });
       }
 
-      await w.loadURL(`data:text/html,<script>(${remote})()</script>`)
+      await w.loadURL('https://myfakesite')
 
       const [,name] = await result
       expect(name).to.deep.equal('SecurityError')

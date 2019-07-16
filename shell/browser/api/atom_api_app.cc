@@ -737,7 +737,7 @@ void App::AllowCertificateError(
     callback.Run(content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY);
 }
 
-void App::SelectClientCertificate(
+base::OnceClosure App::SelectClientCertificate(
     content::WebContents* web_contents,
     net::SSLCertRequestInfo* cert_request_info,
     net::ClientCertIdentityList identities,
@@ -769,6 +769,7 @@ void App::SelectClientCertificate(
         std::move((*shared_identities)[0]),
         base::BindRepeating(&GotPrivateKey, shared_delegate, std::move(cert)));
   }
+  return base::OnceClosure();
 }
 
 void App::OnGpuInfoUpdate() {
@@ -1429,7 +1430,6 @@ void App::BuildPrototype(v8::Isolate* isolate,
                  base::BindRepeating(&Browser::ResignCurrentActivity, browser))
       .SetMethod("updateCurrentActivity",
                  base::BindRepeating(&Browser::UpdateCurrentActivity, browser))
-      // TODO(juturu): Remove in 2.0, deprecate before then with warnings
       .SetMethod("moveToApplicationsFolder", &App::MoveToApplicationsFolder)
       .SetMethod("isInApplicationsFolder", &App::IsInApplicationsFolder)
 #endif
